@@ -427,7 +427,7 @@
 
     - name: Save disk encryption key into a file as an example (in production use a hardware security module)
       ansible.builtin.copy:
-        dest: /root/disk-encryption-key.txt
+        dest: disk-encryption-key.txt
         group: 1000
         owner: 1000
         mode: g+rwx

@@ -19,6 +19,7 @@ build
 !.secrets/.gitignore
 .idea
 data
+cmu-passwords.txt
 
 .vscode/launch.json
 .history

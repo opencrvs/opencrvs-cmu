@@ -13,15 +13,15 @@ echo "Setting up deployment config for $1 - `date --iso-8601=ns`"
 # Set hostname in openhim-console config
 sed -i "s/{{hostname}}/$1/g" /opt/opencrvs/infrastructure/openhim-console-config.deploy.json
 
+# Set ssh user in logrotate.conf
+sed -i -e "s%{{SSH_USER}}%$SSH_USER%" /opt/opencrvs/infrastructure/logrotate.conf
+
 # Set hostname in compose file
 sed -i "s/{{hostname}}/$1/g" /opt/opencrvs/docker-compose.deploy.yml
 
 # Setup an encryption key for Kibana
 KIBANA_ENCRYPTION_KEY=`uuidgen`
 sed -i "s/{{KIBANA_ENCRYPTION_KEY}}/$KIBANA_ENCRYPTION_KEY/g" /opt/opencrvs/infrastructure/monitoring/kibana/kibana.yml
-
-# Move metabase file
-mv /opt/opencrvs/infrastructure/metabase.init.db.sql /data/metabase/metabase.init.db.sql
 
 # Replace environment variables from all alert definition files
 for file in /opt/opencrvs/infrastructure/monitoring/elastalert/rules/*.yaml; do

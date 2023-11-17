@@ -19,6 +19,44 @@
       file:
         path: /opt/opencrvs
         state: directory
+    
+    - name: Give read and write permissions to /opt/opencrvs
+      file:
+        path: /opt/opencrvs
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        mode: 'u+rwX,g+rwX,o-rwx'
+    
+    - name: Give read and write permissions to logrotate.conf because we replace it on each deploy
+      file:
+        path: /etc/logrotate.conf
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        mode: 'u+rwX,g+rwX,o-rwx'
+    
+    - name: Create deploy logfile
+      ansible.builtin.file:
+        path: /var/log/setup-deploy-config.log
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        state: touch
+        mode: 'u+rwX,g+rwX,o-rwx'
+    
+    - name: Create secret logfile
+      ansible.builtin.file:
+        path: /var/log/rotate-secrets.log
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        state: touch
+        mode: 'u+rwX,g+rwX,o-rwx'
+    
+    - name: Create backup logfile
+      ansible.builtin.file:
+        path: /var/log/opencrvs-backup.log
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        state: touch
+        mode: 'u+rwX,g+rwX,o-rwx'
 
     - name: 'Check mandatory variables are defined'
       assert:
@@ -36,6 +74,17 @@
         elasticsearch_superuser_password={{elasticsearch_superuser_password}}
         disk_encryption_key={{ disk_encryption_key }}
 
+    - name: Ensure group "docker" exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add user to Docker group
+      user:
+        name: '{{ ansible_user }}'
+        groups: "docker, sudo"
+        append: yes
+    
     - name: 'Add docker repository key'
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg

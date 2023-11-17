@@ -104,6 +104,7 @@ fi
 if [ -z "$SSH_USER" ] ; then
     echo 'Error: Argument --ssh_user is required.'
     print_usage_and_exit
+fi
 
 if [ -z "$COUNTRY_CONFIG_VERSION" ] ; then
     echo 'Error: Argument --country_config_version is required.'
@@ -354,6 +355,9 @@ cp $BASEDIR/authorized_keys /tmp/opencrvs/infrastructure/authorized_keys
 # Copy metabase database
 cp $PARENT_DIR/src/api/dashboards/file/metabase.init.db.sql /tmp/opencrvs/infrastructure/metabase.init.db.sql
 
+# Copy logrotate.conf
+cp $BASEDIR/logrotate.conf /tmp/opencrvs/infrastructure/logrotate.conf
+
 echo -e "$SSH_KEY" > /tmp/private_key_tmp
 chmod 600 /tmp/private_key_tmp
 echo -e "$KNOWN_HOSTS" > /tmp/known_hosts
@@ -364,7 +368,8 @@ echo $(ssh-keygen -y -f /tmp/private_key_tmp) >> /tmp/opencrvs/infrastructure/au
 rotate_authorized_keys() {
   # file exists and has a size of more than 0 bytes
   if [ -s "/tmp/opencrvs/infrastructure/authorized_keys" ]; then
-    ssh $SSH_USER@$SSH_HOST 'cat /opt/opencrvs/infrastructure/authorized_keys > ~/.ssh/authorized_keys'
+    ROTATE_KEYS_COMMAND='cat /opt/opencrvs/infrastructure/authorized_keys > ~/.ssh/authorized_keys'
+    ssh $SSH_USER@$SSH_HOST "echo $SUDO_PASSWORD | sudo -S $ROTATE_KEYS_COMMAND"
   else
     echo "File /tmp/opencrvs/infrastructure/authorized_keys is empty. Did not rotate authorized keys!"
   fi
@@ -392,7 +397,11 @@ rotate_secrets() {
 }
 
 # Setup configuration files and compose file for the deployment domain
-ssh $SSH_USER@$SSH_HOST "SSH_USER=$SSH_USER SMTP_HOST=$SMTP_HOST SMTP_PORT=$SMTP_PORT SMTP_USERNAME=$SMTP_USERNAME SMTP_PASSWORD=$SMTP_PASSWORD ALERT_EMAIL=$ALERT_EMAIL MINIO_ROOT_USER=$MINIO_ROOT_USER MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD /opt/opencrvs/infrastructure/setup-deploy-config.sh $HOST | tee -a $LOG_LOCATION/setup-deploy-config.log"
+ssh $SSH_USER@$SSH_HOST "SSH_USER=$SSH_USER MINIO_ROOT_USER=$MINIO_ROOT_USER MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD /opt/opencrvs/infrastructure/setup-deploy-config.sh $HOST | tee -a $LOG_LOCATION/setup-deploy-config.log"
+
+ssh $SSH_USER@$SSH_HOST "echo $SUDO_PASSWORD | sudo -S mv /opt/opencrvs/infrastructure/logrotate.conf /etc/logrotate.conf"
+
+ssh $SSH_USER@$SSH_HOST "echo $SUDO_PASSWORD | sudo -S mv /opt/opencrvs/infrastructure/metabase.init.db.sql /data/metabase/metabase.init.db.sql"
 
 # Takes in a space separated string of docker-compose.yml files
 # returns a new line separated list of images defined in those files
@@ -583,7 +592,7 @@ if [ $CLEAR_DATA == "yes" ] ; then
         ELASTICSEARCH_ADMIN_PASSWORD=$ELASTICSEARCH_SUPERUSER_PASSWORD \
         MONGODB_ADMIN_USER=$MONGODB_ADMIN_USER \
         MONGODB_ADMIN_PASSWORD=$MONGODB_ADMIN_PASSWORD \
-        /opt/opencrvs/infrastructure/clear-all-data.sh $REPLICAS"
+        /opt/opencrvs/infrastructure/clear-all-data.sh $REPLICAS $ENV $SUDO_PASSWORD"
 
     echo
     echo "Running migrations..."
@@ -597,7 +606,7 @@ fi
 echo "Setting up Kibana config & alerts"
 
 while true; do
-  if ssh $SSH_USER@$SSH_HOST "ELASTICSEARCH_SUPERUSER_PASSWORD=$ELASTICSEARCH_SUPERUSER_PASSWORD HOST=kibana$HOST /opt/opencrvs/infrastructure/monitoring/kibana/setup-config.sh"; then
+  if ssh $SSH_USER@$SSH_HOST "ELASTICSEARCH_SUPERUSER_PASSWORD=$ELASTICSEARCH_SUPERUSER_PASSWORD HOST=kibana.$HOST /opt/opencrvs/infrastructure/monitoring/kibana/setup-config.sh"; then
     break
   fi
 sleep 5

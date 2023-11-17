@@ -3,11 +3,13 @@ const { Octokit } = require('@octokit/core')
 const { writeFileSync } = require('fs')
 
 const config = {
-  environment: '',
+  environment: 'test',
   repo: {
-    REPOSITORY_ID: '',
-    DOCKERHUB_ACCOUNT: '', // This may be a dockerhub organisation or the same as the username
-    DOCKERHUB_REPO: '',
+    REPOSITORY_ID: '701240725',
+    REPOSITORY_ACCOUNT: 'opencrvs',
+    REPOSITORY_NAME: 'opencrvs-cmu',
+    DOCKERHUB_ACCOUNT: 'cylabinterop', // This may be a dockerhub organisation or the same as the username
+    DOCKERHUB_REPO: 'opencrvs-cmu',
     DOCKER_USERNAME: process.env.DOCKER_USERNAME,
     DOCKER_TOKEN: process.env.DOCKER_TOKEN
   },
@@ -19,23 +21,25 @@ const config = {
     SSH_KEY: process.env.SSH_KEY // id_rsa
   },
   infrastructure: {
-    DISK_SPACE: '',
-    HOSTNAME: '', // server machine hostname used when provisioning - TODO: Adapt to support 3 or 5 replicas
-    DOMAIN: '', // web hostname applied after all public subdomains in Traefik,
+    DISK_SPACE: '60g',
+    HOSTNAME: 'upanzivm03', // server machine hostname used when provisioning - TODO: Adapt to support 3 or 5 replicas
+    DOMAIN: 'opencrvs.africa.cmu.edu', // web hostname applied after all public subdomains in Traefik,
     REPLICAS: '1' // TODO: Adapt to support 3 or 5 replicas
   },
   services: {
     SENTRY_DSN: process.env.SENTRY_DSN || '',
-    ELASTALERT_SLACK_WEBHOOK: process.env.ELASTALERT_SLACK_WEBHOOK || '',
+    ELASTALERT_SLACK_WEBHOOK:
+      process.env.ELASTALERT_SLACK_WEBHOOK ||
+      'https://hooks.slack.com/services/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',
     INFOBIP_API_KEY: process.env.INFOBIP_API_KEY || '',
     INFOBIP_GATEWAY_ENDPOINT: process.env.INFOBIP_GATEWAY_ENDPOINT || '',
     INFOBIP_SENDER_ID: process.env.INFOBIP_SENDER_ID || '' // the name of the SMS sender e.g. OpenCRVS
   },
   seeding: {
     ACTIVATE_USERS: true,
-    AUTH_HOST: '',
-    COUNTRY_CONFIG_HOST: '',
-    GATEWAY_HOST: ''
+    AUTH_HOST: 'https://auth.opencrvs.africa.cmu.edu',
+    COUNTRY_CONFIG_HOST: 'https://countryconfig.opencrvs.africa.cmu.edu',
+    GATEWAY_HOST: 'https://gateway.opencrvs.africa.cmu.edu'
   },
   smtp: {
     SMTP_HOST: process.env.SMTP_HOST || '',
@@ -55,13 +59,13 @@ const config = {
     VPN_SERVERCERT: process.env.VPN_SERVERCERT || ''
   },
   whitelist: {
-    CONTENT_SECURITY_POLICY_WILDCARD: '', // e.g. *.<your-domain>
-    CLIENT_APP_URL: '',
-    LOGIN_URL: ''
+    CONTENT_SECURITY_POLICY_WILDCARD: '*.opencrvs.africa.cmu.edu', // e.g. *.<your-domain>
+    CLIENT_APP_URL: 'https://register.opencrvs.africa.cmu.edu',
+    LOGIN_URL: 'https://login.opencrvs.africa.cmu.edu'
   },
   backup: {
     BACKUP_HOST: process.env.BACKUP_HOST || '',
-    BACKUP_DIRECTORY: '',
+    BACKUP_DIRECTORY: '/home/opencrvs/backups',
     qa: {
       RESTORE_DIRECTORY: '' // If making use of script to restore a production backup on QA for regular monitoring
     }
@@ -121,7 +125,7 @@ async function createSecret(environment, key, keyId, name, secret) {
 
 async function getPublicKey(environment) {
   await octokit.request(
-    `PUT /repos/${config.repo.DOCKERHUB_ACCOUNT}/${config.repo.DOCKERHUB_REPO}/environments/${environment}`,
+    `PUT /repos/${config.repo.REPOSITORY_ACCOUNT}/${config.repo.REPOSITORY_NAME}/environments/${environment}`,
     {
       headers: {
         'X-GitHub-Api-Version': '2022-11-28'

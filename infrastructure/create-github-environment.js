@@ -36,7 +36,7 @@ const config = {
     INFOBIP_SENDER_ID: process.env.INFOBIP_SENDER_ID || '' // the name of the SMS sender e.g. OpenCRVS
   },
   seeding: {
-    ACTIVATE_USERS: true,
+    ACTIVATE_USERS: 'true',
     AUTH_HOST: 'https://auth.opencrvs.africa.cmu.edu',
     COUNTRY_CONFIG_HOST: 'https://countryconfig.opencrvs.africa.cmu.edu',
     GATEWAY_HOST: 'https://gateway.opencrvs.africa.cmu.edu'
@@ -178,7 +178,7 @@ async function main() {
     }
   }
 
-  const SECRETS = {
+  const SECRETS_TO_SAVE_IN_PASSWORD_MANAGER = {
     ELASTICSEARCH_SUPERUSER_PASSWORD: generateLongPassword(),
     ENCRYPTION_KEY: generateLongPassword(),
     KIBANA_USERNAME: 'opencrvs-admin',
@@ -187,10 +187,14 @@ async function main() {
     MINIO_ROOT_USER: generateLongPassword(),
     MONGODB_ADMIN_PASSWORD: generateLongPassword(),
     MONGODB_ADMIN_USER: generateLongPassword(),
-    SUPER_USER_PASSWORD: generateLongPassword(),
+    SUPER_USER_PASSWORD: generateLongPassword()
+  }
+
+  const SECRETS = {
     DOCKERHUB_ACCOUNT: config.repo.DOCKERHUB_ACCOUNT,
     DOCKERHUB_REPO: config.repo.DOCKERHUB_REPO,
     DOCKER_TOKEN: config.repo.DOCKER_TOKEN,
+    ...SECRETS_TO_SAVE_IN_PASSWORD_MANAGER,
     ...config.ssh,
     ...config.smtp,
     ...config.services,
@@ -204,8 +208,8 @@ async function main() {
     ...backupVariables
   }
   writeFileSync(
-    './.secrets/' + config.environment + '.json',
-    JSON.stringify([SECRETS, VARIABLES], null, 2)
+    '../.secrets/' + config.environment + '.json',
+    JSON.stringify([SECRETS_TO_SAVE_IN_PASSWORD_MANAGER], null, 2)
   )
   if (process.argv.includes('--dry-run')) {
     console.log('Dry run. Not creating secrets or variables.')

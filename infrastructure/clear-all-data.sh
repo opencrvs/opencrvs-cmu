@@ -92,11 +92,12 @@ docker run --rm --network=$NETWORK appropriate/curl curl -XDELETE "http://$(elas
 #-----------------------------
 docker run --rm --network=$NETWORK appropriate/curl curl -X POST 'http://influxdb:8086/query?db=ocrvs' --data-urlencode "q=DROP SERIES FROM /.*/" -v
 
-# Delete all data from minio
-#-----------------------------
-rm -rf /data/minio/ocrvs
-mkdir -p /data/minio/ocrvs
-
-# Delete all data from metabase
-#-----------------------------
-rm -rf /data/metabase/*
+if [[ "$ENV" = "qa" ]]; then
+ echo $SUDO_PASSWORD | sudo -S rm -rf /data/minio/ocrvs
+ echo $SUDO_PASSWORD | sudo -S mkdir -p /data/minio/ocrvs
+ echo $SUDO_PASSWORD | sudo -S rm -rf /data/metabase/*
+else
+ rm -rf /data/minio/ocrvs
+ mkdir -p /data/minio/ocrvs
+ rm -rf /data/metabase/*
+fi

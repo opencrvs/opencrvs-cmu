@@ -284,7 +284,6 @@ services:
         - 'traefik.http.routers.minio.rule=Host(`minio.{{hostname}}`)'
         - 'traefik.http.routers.minio.entrypoints=web'
         - 'traefik.http.routers.minio.service=minio'
-        - 'traefik.http.routers.minio.middlewares=minio-https-redirect'
         - 'traefik.http.services.minio.loadbalancer.server.port=9000'
     networks:
       - overlay_net
@@ -491,7 +490,7 @@ services:
         - 'traefik.enable=true'
         - 'traefik.http.routers.components.rule=Host(`ui-kit.{{hostname}}`)'
         - 'traefik.http.services.components.loadbalancer.server.port=80'
-        - 'traefik.http.routers.components.entrypoints=web,websecure'
+        - 'traefik.http.routers.components.entrypoints=web'
         - 'traefik.docker.network=opencrvs_overlay_net'
         - 'traefik.http.middlewares.components.headers.customresponseheaders.Pragma=no-cache'
         - 'traefik.http.middlewares.components.headers.customresponseheaders.Cache-control=no-store'
